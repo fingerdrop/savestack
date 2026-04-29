@@ -1,0 +1,8 @@
+/*
+ * Alarm (phosphor-icons/Alarm@0.0.57)
+ *
+ * Learn More: https://www.framer.com/asset-urls
+ */
+
+export * from "../js/alarm.js"
+export { default } from "../js/alarm.js"

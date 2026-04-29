@@ -1,0 +1,8 @@
+/*
+ * Timer (phosphor-icons/Timer@0.0.57)
+ *
+ * Learn More: https://www.framer.com/asset-urls
+ */
+
+export * from "../js/timer.js"
+export { default } from "../js/timer.js"

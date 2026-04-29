@@ -1,0 +1,8 @@
+/*
+ * Ranking (phosphor-icons/Ranking@0.0.57)
+ *
+ * Learn More: https://www.framer.com/asset-urls
+ */
+
+export * from "../js/ranking.js"
+export { default } from "../js/ranking.js"
