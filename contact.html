@@ -454,7 +454,7 @@
 <!-- SnippetEnd: legacy-headEnd -->
 
     <!-- End of headEnd -->
-<style id="ss-framer-fix">/* Framer runtime removed */[data-framer-appear-id]{opacity:1!important;transform:none!important;transition:opacity .5s ease,transform .5s ease}[style*="opacity:0.001"]{opacity:1!important}[style*="opacity: 0.001"]{opacity:1!important}body{animation:ss-pagein .45s cubic-bezier(.22,1,.36,1)}@keyframes ss-pagein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}.framer-YcV3R *{transition:opacity .3s ease,transform .3s ease}.framer-syh9kx{opacity:0!important;pointer-events:none!important}</style>
+<style id="ss-framer-fix">/* Framer runtime removed */[data-framer-appear-id]{opacity:1!important;transform:none!important;transition:opacity .5s ease,transform .5s ease}[style*="opacity:0.001"]{opacity:1!important}[style*="opacity: 0.001"]{opacity:1!important}body{animation:ss-pagein .45s cubic-bezier(.22,1,.36,1)}@keyframes ss-pagein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}.framer-YcV3R *{transition:opacity .3s ease,transform .3s ease}</style>
 </head>
 <body>
 	
@@ -484,40 +484,34 @@
     <!-- End of bodyEnd -->
 <script id="ss-style-guard">
 (function(){
-  // Inject a CSS rule immediately (before DOMContentLoaded) to hide the overlay
-  // framer-syh9kx is the full-screen dark nav overlay Framer leaves open on mobile
-  var _style=document.createElement('style');
-  _style.textContent='.framer-syh9kx{opacity:0!important;pointer-events:none!important}';
-  document.head&&document.head.appendChild(_style)||document.addEventListener('DOMContentLoaded',function(){document.head.appendChild(_style);});
-
+  // Kill-list: CSS properties Framer injects that break our styles
   function fixEl(el){
     var s=el.style,changed=false;
+    // Backdrop-filter blur on banner elements
     if(s.backdropFilter){s.backdropFilter='';s.webkitBackdropFilter='';changed=true;}
     if(s.webkitBackdropFilter){s.webkitBackdropFilter='';changed=true;}
+    // will-change:filter causes compositing blur on background images
     if(s.willChange==='filter'){s.willChange='auto';changed=true;}
+    // filter:blur (but preserve drop-shadow on postcard images)
     if(s.filter&&s.filter.indexOf('blur(')>-1&&s.filter.indexOf('drop-shadow')===-1){s.filter='';changed=true;}
+    // opacity:0.001 — Framer hides appear-animated elements this way
     if(s.opacity&&parseFloat(s.opacity)<0.01){s.opacity='1';changed=true;}
+    // transform:translateY — Framer appear animation initial state
     if(s.transform&&s.transform.indexOf('translateY')>-1&&s.transform.indexOf('scale(0')>-1){s.transform='none';changed=true;}
     return changed;
   }
 
-  function killOverlay(){
-    // framer-syh9kx = full-viewport dark overlay Framer activates on mobile menu open
-    document.querySelectorAll('.framer-syh9kx,[data-framer-name="Overlay"]').forEach(function(el){
-      if(parseFloat(el.style.opacity)>0){el.style.opacity='0';}
-      if(el.style.pointerEvents!=='none'){el.style.pointerEvents='none';}
-    });
-  }
-
   function fixAll(){
-    killOverlay();
+    // Target known blur-source classes
     ['framer-9ylpn8','framer-11ifl84'].forEach(function(c){
       document.querySelectorAll('.'+c).forEach(function(el){
         fixEl(el);
         el.querySelectorAll('*').forEach(fixEl);
       });
     });
+    // Sweep all styled elements for any Framer inline style injections
     document.querySelectorAll('[style]').forEach(fixEl);
+    // Ensure data-framer-appear-id elements are always visible
     document.querySelectorAll('[data-framer-appear-id]').forEach(function(el){
       var s=el.style;
       if(s.opacity&&parseFloat(s.opacity)<0.5){s.opacity='1';}
@@ -525,25 +519,24 @@
     });
   }
 
+  // MutationObserver: re-run fix every time Framer touches a style attribute
   var obs=new MutationObserver(function(muts){
-    var needsOverlayKill=false;
     muts.forEach(function(m){
       if(m.type==='attributes'&&m.attributeName==='style'){
         fixEl(m.target);
-        if(m.target.classList&&m.target.classList.contains('framer-syh9kx')){needsOverlayKill=true;}
       } else if(m.type==='childList'){
         m.addedNodes.forEach(function(n){
           if(n.nodeType===1){fixEl(n);n.querySelectorAll&&n.querySelectorAll('[style]').forEach(fixEl);}
         });
       }
     });
-    if(needsOverlayKill){killOverlay();}
   });
 
   function start(){
     fixAll();
     obs.observe(document.documentElement,{attributes:true,attributeFilter:['style'],childList:true,subtree:true});
-    [100,300,500,1000,2000,4000].forEach(function(ms){setTimeout(fixAll,ms);});
+    // Belt-and-suspenders: re-run at increasing intervals after load
+    [100,500,1000,2000,4000].forEach(function(ms){setTimeout(fixAll,ms);});
   }
 
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',start);}
