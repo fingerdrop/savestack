@@ -477,5 +477,65 @@ Sub-description (Process): Connect your vendor accounts → We pull all billing 
 	<!-- Start of bodyEnd -->
     
     <!-- End of bodyEnd -->
-</body>
+<script id="ss-style-guard">
+(function(){
+  // Kill-list: CSS properties Framer injects that break our styles
+  function fixEl(el){
+    var s=el.style,changed=false;
+    // Backdrop-filter blur on banner elements
+    if(s.backdropFilter){s.backdropFilter='';s.webkitBackdropFilter='';changed=true;}
+    if(s.webkitBackdropFilter){s.webkitBackdropFilter='';changed=true;}
+    // will-change:filter causes compositing blur on background images
+    if(s.willChange==='filter'){s.willChange='auto';changed=true;}
+    // filter:blur (but preserve drop-shadow on postcard images)
+    if(s.filter&&s.filter.indexOf('blur(')>-1&&s.filter.indexOf('drop-shadow')===-1){s.filter='';changed=true;}
+    // opacity:0.001 — Framer hides appear-animated elements this way
+    if(s.opacity&&parseFloat(s.opacity)<0.01){s.opacity='1';changed=true;}
+    // transform:translateY — Framer appear animation initial state
+    if(s.transform&&s.transform.indexOf('translateY')>-1&&s.transform.indexOf('scale(0')>-1){s.transform='none';changed=true;}
+    return changed;
+  }
+
+  function fixAll(){
+    // Target known blur-source classes
+    ['framer-9ylpn8','framer-11ifl84'].forEach(function(c){
+      document.querySelectorAll('.'+c).forEach(function(el){
+        fixEl(el);
+        el.querySelectorAll('*').forEach(fixEl);
+      });
+    });
+    // Sweep all styled elements for any Framer inline style injections
+    document.querySelectorAll('[style]').forEach(fixEl);
+    // Ensure data-framer-appear-id elements are always visible
+    document.querySelectorAll('[data-framer-appear-id]').forEach(function(el){
+      var s=el.style;
+      if(s.opacity&&parseFloat(s.opacity)<0.5){s.opacity='1';}
+      if(s.transform&&s.transform!=='none'){s.transform='none';}
+    });
+  }
+
+  // MutationObserver: re-run fix every time Framer touches a style attribute
+  var obs=new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      if(m.type==='attributes'&&m.attributeName==='style'){
+        fixEl(m.target);
+      } else if(m.type==='childList'){
+        m.addedNodes.forEach(function(n){
+          if(n.nodeType===1){fixEl(n);n.querySelectorAll&&n.querySelectorAll('[style]').forEach(fixEl);}
+        });
+      }
+    });
+  });
+
+  function start(){
+    fixAll();
+    obs.observe(document.documentElement,{attributes:true,attributeFilter:['style'],childList:true,subtree:true});
+    // Belt-and-suspenders: re-run at increasing intervals after load
+    [100,500,1000,2000,4000].forEach(function(ms){setTimeout(fixAll,ms);});
+  }
+
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',start);}
+  else{start();}
+})();
+</script></body>
 </html>
