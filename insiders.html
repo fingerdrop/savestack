@@ -454,7 +454,110 @@
 <!-- SnippetEnd: legacy-headEnd -->
 
     <!-- End of headEnd -->
-<style id="ss-framer-fix">/* Framer runtime removed */[data-framer-appear-id]{opacity:1!important;transform:none!important;transition:opacity .5s ease,transform .5s ease}[style*="opacity:0.001"]{opacity:1!important}[style*="opacity: 0.001"]{opacity:1!important}body{animation:ss-pagein .45s cubic-bezier(.22,1,.36,1)}@keyframes ss-pagein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}.framer-YcV3R *{transition:opacity .3s ease,transform .3s ease}</style>
+<style id="ss-framer-fix">/* Framer runtime removed */
+[data-framer-appear-id]{opacity:1!important;transform:none!important}
+[style*="opacity:0.001"]{opacity:1!important}
+[style*="opacity: 0.001"]{opacity:1!important}
+body{animation:ss-pagein .45s cubic-bezier(.22,1,.36,1)}
+@keyframes ss-pagein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* Issue 2: Remove misplaced backdrop-filter blur */
+.framer-UXYss .framer-11ifl84{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+/* Issue 3: Mobile top spacing — push content below fixed nav */
+@media(max-width:809.98px){.framer-UXYss .framer-14izlou{padding-top:110px!important}}
+/* Issue 1: Scroll animation base states */
+.ss-anim{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s ease}
+.ss-anim.ss-visible{opacity:1;transform:none}
+.ss-fade{opacity:0;transition:opacity .8s ease .1s}
+.ss-fade.ss-visible{opacity:1}
+.ss-scale{opacity:0;transform:scale(0.9);transition:opacity .7s ease,transform .7s ease}
+.ss-scale.ss-visible{opacity:1;transform:scale(1)}
+.ss-anim:nth-child(2){transition-delay:.1s}
+.ss-anim:nth-child(3){transition-delay:.2s}
+</style>
+<script>
+(function(){
+  // Issue 1: Scroll-triggered animations via IntersectionObserver
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        e.target.classList.add('ss-visible');
+        io.unobserve(e.target);
+      }
+    });
+  },{threshold:0.15});
+
+  function observe(el,cls){el.classList.add(cls);io.observe(el);}
+
+  document.addEventListener('DOMContentLoaded',function(){
+    // Stat cards: fade-up
+    var statCols = document.querySelectorAll('.framer-118ahbx,.framer-11kohc6,.framer-wth1z8');
+    statCols.forEach(function(el,i){
+      el.classList.add('ss-anim');
+      el.style.transitionDelay = (i*0.12)+'s';
+      io.observe(el);
+    });
+
+    // Hero banner text: fade-in
+    var heroBanner = document.querySelector('.framer-13hw88b');
+    if(heroBanner) observe(heroBanner,'ss-fade');
+
+    // SubHero text: fade-up
+    var subhero = document.querySelector('.framer-1vpqk1z');
+    if(subhero) observe(subhero,'ss-anim');
+
+    // NKY postcard images: scale + fade
+    document.querySelectorAll('.nky-pc-svg').forEach(function(el){
+      observe(el,'ss-scale');
+    });
+
+    // NKY cards: fade-up with stagger
+    document.querySelectorAll('.nky-card').forEach(function(el,i){
+      el.classList.add('ss-anim');
+      el.style.transitionDelay = (i*0.15)+'s';
+      io.observe(el);
+    });
+
+    // Count-up for stat numbers
+    var countEls = [];
+    document.querySelectorAll('.framer-text').forEach(function(el){
+      var t = el.textContent.trim();
+      if(t==='70%')countEls.push({el:el,end:70,suffix:'%'});
+      else if(t==='29%')countEls.push({el:el,end:29,suffix:'%'});
+      else if(t==='9.5x')countEls.push({el:el,end:9.5,suffix:'x',dec:1});
+    });
+    // Keep only the first (non-hidden) instance of each
+    var seen={};
+    countEls = countEls.filter(function(c){
+      var k=c.suffix+c.end;
+      if(seen[k])return false;
+      // Skip hidden SSR variants
+      var p=c.el.closest('.ssr-variant');
+      if(p&&(p.classList.contains('hidden-79gqju')||p.classList.contains('hidden-cfki6g')||p.classList.contains('hidden-14hlg6p')))return false;
+      seen[k]=true;return true;
+    });
+
+    var countIO = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(!e.isIntersecting)return;
+        var cfg = countEls.find(function(c){return c.el===e.target;});
+        if(!cfg)return;
+        countIO.unobserve(e.target);
+        var start=0,duration=1400,startTime=null;
+        function step(ts){
+          if(!startTime)startTime=ts;
+          var progress=Math.min((ts-startTime)/duration,1);
+          var ease=1-Math.pow(1-progress,3);
+          var val=start+(cfg.end-start)*ease;
+          cfg.el.textContent=(cfg.dec?val.toFixed(cfg.dec):Math.round(val))+cfg.suffix;
+          if(progress<1)requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      });
+    },{threshold:0.5});
+    countEls.forEach(function(c){countIO.observe(c.el);});
+  });
+})();
+</script>
 </head>
 <body>
 	
