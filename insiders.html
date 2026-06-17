@@ -460,8 +460,9 @@
 [style*="opacity: 0.001"]{opacity:1!important}
 body{animation:ss-pagein .45s cubic-bezier(.22,1,.36,1)}
 @keyframes ss-pagein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-/* Issue 2: Remove misplaced backdrop-filter blur */
+/* Issue 2: Remove blur effects — backdrop-filter and will-change:filter compositing blur */
 .framer-UXYss .framer-11ifl84{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.framer-UXYss .framer-9ylpn8{will-change:auto!important}
 /* Issue 3: Mobile top spacing — push content below fixed nav */
 @media(max-width:809.98px){.framer-UXYss .framer-14izlou{padding-top:110px!important}}
 /* Issue 1: Scroll animation base states */
